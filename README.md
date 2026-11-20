@@ -10,6 +10,8 @@ Prototype only, fictional data, not affiliated with any vendor.
 
 [Live demo →](https://impact-compare.vercel.app)
 
+The project passport — what Relative is, how it is built, and the rules for changing it — is [docs/PROJECT.md](docs/PROJECT.md).
+
 ![Demo, a few seconds: open Nordic C30/37, search the public database for Meridian, and land on a comparison with the percentage against the base product](docs/demo.webp)
 
 *Profile, then the public database, then the gap. A minus is lower impact.*
