@@ -1,7 +1,13 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import { DEFAULT_PRODUCT_ID } from "@/data/seed"
 import { Button } from "@/components/ui/button"
+
+export const metadata: Metadata = {
+  title: "Product not found",
+  description: "That address is not one of the twenty fictional declarations.",
+}
 
 export default function NotFound() {
   return (

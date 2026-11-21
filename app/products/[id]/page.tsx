@@ -17,7 +17,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params
   const product = getProduct(id)
-  if (!product) return { title: "Product not found" }
+  if (!product) {
+    return {
+      title: "Product not found",
+      description: "That address is not one of the twenty fictional declarations.",
+    }
+  }
   return {
     title: product.name,
     description: product.summary,
