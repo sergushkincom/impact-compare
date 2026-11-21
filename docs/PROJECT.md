@@ -103,7 +103,7 @@ Solid Glass sits between flat design and liquid glass. Every surface is a thick 
 
 Dark is the material as designed and the default (`class="dark"` on `<html>`). Light is the same panes in daylight. An inline script in `app/layout.tsx` removes `dark` before paint when `relative-theme` is `light`.
 
-**Fonts.** The page loads Geist and Geist Mono through `next/font/google` (`--font-geist-sans`, `--font-geist-mono`). `app/globals.css` sets the document font to Geist, with `ui-sans-serif` behind it, and maps `--font-mono` to Geist Mono. Product ids use the mono face. Solid Glass's own theme tokens name "Geist Variable" and "Geist Mono Variable"; the faces the app actually ships are the next/font files.
+**Fonts.** The page loads Geist and Geist Mono through `next/font/google` (`--font-geist-sans`, `--font-geist-mono`). `app/globals.css` sets the document font to Geist, with `ui-sans-serif` behind it, and maps `--font-mono` to Geist Mono. Product ids use the mono face. Solid Glass's own theme tokens name "Geist Variable" and "Geist Mono Variable"; the faces the app actually ships are the next/font files. The share image cannot use `next/font`, so it embeds the latin Geist regular and medium files in `app/fonts/` under the SIL Open Font License (`app/fonts/OFL.txt`).
 
 **Colour.** Tokens are OKLCH. The page background is opaque; the panes are smoked glass.
 
@@ -163,8 +163,9 @@ Shipped and live at [https://impact-compare.vercel.app](https://impact-compare.v
 - Fair-ranking check on category, declared unit, and method, with the chart left visible.
 - Shareable comparison URL, CSV export, copy link, dark/light theme.
 - Eight indicators, peer-scaled radar, A1–A3 stage charts, source breakdown on the profile.
-- Vitest suite and one Playwright flow, gated in CI together with typecheck, lint, and a production build.
+- Vitest suite and a Playwright spec, gated in CI together with typecheck, lint, and a production build.
 - README essay, screenshots, and this passport.
+- A share card for the site link. `app/opengraph-image.tsx` draws it: the Relative mark, Nordic C30/37 against Meridian C30/37, and the line that every figure is fictional. The root metadata sets the title, the description, the Open Graph fields, and a Twitter large-image card. `metadataBase` is `https://impact-compare.vercel.app`, so the image URL is absolute.
 
 No open GitHub issues.
 
@@ -178,13 +179,15 @@ The compare dialog opens on **Own library**. The README flags that as an open qu
 
 The README also records three things worth testing with people: whether the radar centre reads as "good" without the caption; whether the unit-mismatch warning stops someone quoting the percentage; and which tab should open by default.
 
-The Playwright spec covers one fair two-product comparison. It does not cover the warning, a three-product set, export, copy, theme, or the not-found page.
+The Playwright spec covers one fair two-product comparison, and checks that the site link carries the share-card title, description, image, and Twitter card. It does not cover the warning, a three-product set, export, copy, theme, or the not-found page.
 
 The dialog subtitle says search matches name, category, and product id. `searchHaystack` in `lib/compare.ts` also includes the manufacturer, which is what the README describes.
 
 The README still says the Live badge is a placeholder until the repo is connected to Vercel. The app is live at that address.
 
 `scripts/capture.mjs` has no package script, so regenerating the screenshots is a manual invocation.
+
+The share image is the one Nordic–Meridian card for every URL. A comparison link does not draw its own picture.
 
 ## Rules
 

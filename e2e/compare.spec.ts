@@ -1,5 +1,35 @@
 import { expect, test } from "@playwright/test"
 
+test("the site link unfurls as a large card", async ({ page }) => {
+  await page.goto("/")
+  await expect(page).toHaveURL(/\/products\/hv-c30-089$/)
+
+  const title = "Relative — Nordic against Meridian"
+  const description =
+    "Global warming is higher, water is lower. Same cubic metre, same method. Every figure is fictional."
+
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", title)
+  await expect(page.locator('meta[property="og:description"]')).toHaveAttribute("content", description)
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    "content",
+    /^https:\/\/impact-compare\.vercel\.app\/opengraph-image/,
+  )
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image")
+  await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute("content", title)
+  await expect(page.locator('meta[name="twitter:description"]')).toHaveAttribute("content", description)
+  await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+    "content",
+    /^https:\/\/impact-compare\.vercel\.app\/opengraph-image/,
+  )
+
+  const image = await page.request.get("/opengraph-image")
+  expect(image.status()).toBe(200)
+  expect(image.headers()["content-type"]).toContain("image/png")
+  const body = await image.body()
+  expect(body.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a")
+  expect(body.byteLength).toBeGreaterThan(8_000)
+})
+
 test("profile, compare, two products, shareable comparison", async ({ page }) => {
   await page.goto("/products/hv-c30-089")
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { SHARE_DESCRIPTION, SHARE_TITLE, SITE_ORIGIN } from "@/lib/share"
 
 import "./globals.css"
 
@@ -16,12 +17,25 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
-    default: "Relative",
+    default: SHARE_TITLE,
     template: "%s · Relative",
   },
-  description:
-    "Compare the environmental footprint of construction products. A design prototype with fictional EPD figures.",
+  description: SHARE_DESCRIPTION,
+  openGraph: {
+    title: SHARE_TITLE,
+    description: SHARE_DESCRIPTION,
+    url: SITE_ORIGIN,
+    siteName: "Relative",
+    type: "website",
+    locale: "en_GB",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SHARE_TITLE,
+    description: SHARE_DESCRIPTION,
+  },
 }
 
 const themeScript = `(function(){try{if(localStorage.getItem("relative-theme")==="light"){document.documentElement.classList.remove("dark")}}catch(e){}})()`
