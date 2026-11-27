@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { createContext, memo, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { useReducedMotion } from "motion/react"
 import {
   Bar,
@@ -11,11 +11,14 @@ import {
   PolarRadiusAxis,
   Radar,
   RadarChart,
+  Text,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts"
+import type { BaseTickContentProps } from "recharts"
 import {
+  INDICATORS,
   indicatorMeta,
   STAGE_LABEL,
   type IndicatorKey,
@@ -24,6 +27,21 @@ import {
 } from "@/data/types"
 import { axisScore, peersOf, stageRows } from "@/lib/compare"
 import { formatNumber, formatQuantity } from "@/lib/format"
+
+export function radarAxisId(key: IndicatorKey) {
+  return `radar-axis-${key}`
+}
+
+export function absoluteRowId(key: IndicatorKey) {
+  return `absolute-${key}`
+}
+
+export type MetricLink = {
+  onEnter: (key: IndicatorKey) => void
+  onSettle: (target: EventTarget | null) => void
+}
+
+const MetricLinkContext = createContext<MetricLink | null>(null)
 
 export const SERIES_COLOR = [
   "var(--series-1)",
@@ -70,6 +88,106 @@ function radarRows(products: Product[], keys: IndicatorKey[], scaleFrom: Product
   })
 }
 
+type LinkedTickProps = BaseTickContentProps & {
+  cx?: number
+  cy?: number
+  radius?: number
+}
+
+function polarPoint(cx: number, cy: number, radius: number, angle: number) {
+  const radians = (-angle * Math.PI) / 180
+  return {
+    x: cx + Math.cos(radians) * radius,
+    y: cy + Math.sin(radians) * radius,
+  }
+}
+
+function LinkedRadarTick(tick: Partial<LinkedTickProps>) {
+  const metricLink = useContext(MetricLinkContext)
+  const short = String(tick.payload?.value ?? "")
+  const metric = INDICATORS.find((item) => item.short === short)?.key
+  if (!metric || !metricLink) {
+    return (
+      <Text
+        x={tick.x}
+        y={tick.y}
+        textAnchor={tick.textAnchor}
+        verticalAnchor={tick.verticalAnchor}
+        fill="var(--muted-foreground)"
+        fontSize={11}
+      >
+        {short}
+      </Text>
+    )
+  }
+
+  const meta = indicatorMeta(metric)
+  const angle = tick.payload?.coordinate
+  const rim =
+    typeof tick.cx === "number" &&
+    typeof tick.cy === "number" &&
+    typeof tick.radius === "number" &&
+    typeof angle === "number"
+      ? polarPoint(tick.cx, tick.cy, tick.radius, angle)
+      : null
+
+  return (
+    <g
+      id={radarAxisId(metric)}
+      role="button"
+      tabIndex={0}
+      aria-label={meta.name}
+      aria-controls={absoluteRowId(metric)}
+      aria-describedby={absoluteRowId(metric)}
+      data-metric={metric}
+      className="radar-axis outline-none"
+      onMouseEnter={() => metricLink.onEnter(metric)}
+      onMouseLeave={() => metricLink.onSettle(document.activeElement)}
+      onFocus={() => metricLink.onEnter(metric)}
+      onBlur={(event) => {
+        const next = event.relatedTarget
+        if (next instanceof Node && event.currentTarget.contains(next)) return
+        metricLink.onSettle(next)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === " " || event.key === "Enter") event.preventDefault()
+      }}
+    >
+      {rim && typeof tick.cx === "number" && typeof tick.cy === "number" ? (
+        <>
+          <line
+            aria-hidden
+            x1={tick.cx}
+            y1={tick.cy}
+            x2={Number(tick.x)}
+            y2={Number(tick.y)}
+            stroke="transparent"
+            strokeWidth={16}
+          />
+          <line
+            aria-hidden
+            x1={tick.cx}
+            y1={tick.cy}
+            x2={rim.x}
+            y2={rim.y}
+            className="radar-spoke pointer-events-none"
+          />
+        </>
+      ) : null}
+      <Text
+        x={tick.x}
+        y={tick.y}
+        textAnchor={tick.textAnchor}
+        verticalAnchor={tick.verticalAnchor}
+        fontSize={11}
+        className="fill-muted-foreground"
+      >
+        {short}
+      </Text>
+    </g>
+  )
+}
+
 function RadarTip({
   active,
   payload,
@@ -100,19 +218,22 @@ function RadarTip({
   )
 }
 
-export function IndicatorRadar({
+export const IndicatorRadar = memo(function IndicatorRadar({
   products,
   keys,
   mode,
   catalogue,
+  metricLink,
 }: {
   products: Product[]
   keys: IndicatorKey[]
   mode: "profile" | "comparison"
   catalogue: Product[]
+  metricLink?: MetricLink
 }) {
   const reduce = useReducedMotion()
   const [frame, size] = useElementSize<HTMLDivElement>({ width: 480, height: 480 })
+  const linkedTick = useMemo(() => <LinkedRadarTick />, [])
   const scaleFrom = mode === "profile" ? peersOf(products[0], catalogue) : products
   const scaled = scaleFrom.length >= 2 && keys.length > 0
   const data = scaled ? radarRows(products, keys, scaleFrom) : []
@@ -127,27 +248,29 @@ export function IndicatorRadar({
     <figure className="flex flex-col gap-3">
       {scaled ? (
         <div ref={frame} className="aspect-square w-full min-h-[280px] overflow-hidden">
-          <RadarChart width={size.width} height={size.height} data={data} cx="50%" cy="50%" outerRadius="68%">
-            <PolarGrid stroke="var(--border)" />
-            <PolarAngleAxis
-              dataKey="short"
-              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-            />
-            <PolarRadiusAxis domain={[0, 1]} tick={false} axisLine={false} />
-            {products.map((product, index) => (
-              <Radar
-                key={product.id}
-                name={product.name}
-                dataKey={product.id}
-                stroke={SERIES_COLOR[index]}
-                fill={SERIES_COLOR[index]}
-                fillOpacity={0.16}
-                strokeWidth={1.75}
-                isAnimationActive={!reduce}
+          <MetricLinkContext.Provider value={metricLink ?? null}>
+            <RadarChart width={size.width} height={size.height} data={data} cx="50%" cy="50%" outerRadius="68%">
+              <PolarGrid stroke="var(--border)" />
+              <PolarAngleAxis
+                dataKey="short"
+                tick={metricLink ? linkedTick : { fill: "var(--muted-foreground)", fontSize: 11 }}
               />
-            ))}
-            <Tooltip content={<RadarTip />} />
-          </RadarChart>
+              <PolarRadiusAxis domain={[0, 1]} tick={false} axisLine={false} />
+              {products.map((product, index) => (
+                <Radar
+                  key={product.id}
+                  name={product.name}
+                  dataKey={product.id}
+                  stroke={SERIES_COLOR[index]}
+                  fill={SERIES_COLOR[index]}
+                  fillOpacity={0.16}
+                  strokeWidth={1.75}
+                  isAnimationActive={!reduce}
+                />
+              ))}
+              <Tooltip content={<RadarTip />} />
+            </RadarChart>
+          </MetricLinkContext.Provider>
         </div>
       ) : (
         <div className="grid aspect-square min-h-[220px] place-items-center rounded-xl bg-card px-6 text-center text-sm text-muted-foreground ring-1 ring-foreground/10">
@@ -169,7 +292,7 @@ export function IndicatorRadar({
       </ul>
     </figure>
   )
-}
+})
 
 function StageTip({
   active,

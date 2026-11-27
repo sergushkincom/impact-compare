@@ -39,3 +39,56 @@ html {
     scroll-behavior: auto !important;
   }
 }
+
+/* Spoke and label follow the shared hovered metric. The attribute lives on the
+   section, so the chart itself does not re-render and keyboard focus stays. */
+.radar-spoke {
+  stroke: var(--foreground);
+  stroke-width: 1.75;
+  stroke-opacity: 0;
+  transition: stroke-opacity 200ms ease-out;
+}
+
+.recharts-polar-angle-axis-tick-line {
+  transition: stroke 200ms ease-out, stroke-opacity 200ms ease-out;
+}
+
+.radar-axis text {
+  transition: fill 200ms ease-out;
+}
+
+.radar-axis:focus-visible text {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.metric-link[data-hovered="gwp"] [data-metric="gwp"] .radar-spoke,
+.metric-link[data-hovered="odp"] [data-metric="odp"] .radar-spoke,
+.metric-link[data-hovered="ap"] [data-metric="ap"] .radar-spoke,
+.metric-link[data-hovered="ep"] [data-metric="ep"] .radar-spoke,
+.metric-link[data-hovered="pocp"] [data-metric="pocp"] .radar-spoke,
+.metric-link[data-hovered="adpe"] [data-metric="adpe"] .radar-spoke,
+.metric-link[data-hovered="adpf"] [data-metric="adpf"] .radar-spoke,
+.metric-link[data-hovered="wdp"] [data-metric="wdp"] .radar-spoke,
+.metric-link[data-hovered="gwp"] .recharts-polar-angle-axis-tick:has([data-metric="gwp"]) .recharts-polar-angle-axis-tick-line,
+.metric-link[data-hovered="odp"] .recharts-polar-angle-axis-tick:has([data-metric="odp"]) .recharts-polar-angle-axis-tick-line,
+.metric-link[data-hovered="ap"] .recharts-polar-angle-axis-tick:has([data-metric="ap"]) .recharts-polar-angle-axis-tick-line,
+.metric-link[data-hovered="ep"] .recharts-polar-angle-axis-tick:has([data-metric="ep"]) .recharts-polar-angle-axis-tick-line,
+.metric-link[data-hovered="pocp"] .recharts-polar-angle-axis-tick:has([data-metric="pocp"]) .recharts-polar-angle-axis-tick-line,
+.metric-link[data-hovered="adpe"] .recharts-polar-angle-axis-tick:has([data-metric="adpe"]) .recharts-polar-angle-axis-tick-line,
+.metric-link[data-hovered="adpf"] .recharts-polar-angle-axis-tick:has([data-metric="adpf"]) .recharts-polar-angle-axis-tick-line,
+.metric-link[data-hovered="wdp"] .recharts-polar-angle-axis-tick:has([data-metric="wdp"]) .recharts-polar-angle-axis-tick-line {
+  stroke: var(--foreground);
+  stroke-opacity: 0.55;
+}
+
+.metric-link[data-hovered="gwp"] [data-metric="gwp"] text,
+.metric-link[data-hovered="odp"] [data-metric="odp"] text,
+.metric-link[data-hovered="ap"] [data-metric="ap"] text,
+.metric-link[data-hovered="ep"] [data-metric="ep"] text,
+.metric-link[data-hovered="pocp"] [data-metric="pocp"] text,
+.metric-link[data-hovered="adpe"] [data-metric="adpe"] text,
+.metric-link[data-hovered="adpf"] [data-metric="adpf"] text,
+.metric-link[data-hovered="wdp"] [data-metric="wdp"] text {
+  fill: var(--foreground);
+}

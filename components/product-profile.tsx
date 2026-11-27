@@ -1,9 +1,9 @@
 "use client"
 
 import { Info } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
 
-import { IndicatorRadar, StageChart } from "@/components/charts"
+import { absoluteRowId, IndicatorRadar, radarAxisId, StageChart, type MetricLink } from "@/components/charts"
 import { MaterialSwatch } from "@/components/swatch"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -19,8 +19,98 @@ import {
   unitFor,
 } from "@/data/types"
 import { formatNumber, formatQuantity, percentShares } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 const HEADLINES: IndicatorKey[] = ["gwp", "adpf", "wdp"]
+const RADAR_KEYS = INDICATORS.map((item) => item.key)
+
+function metricFrom(target: EventTarget | null): IndicatorKey | null {
+  if (!(target instanceof Element)) return null
+  const value = target.closest("[data-metric]")?.getAttribute("data-metric")
+  if (!value) return null
+  return INDICATORS.some((item) => item.key === value) ? (value as IndicatorKey) : null
+}
+
+function LinkedIndicators({
+  product,
+  catalogue,
+}: {
+  product: Product
+  catalogue: Product[]
+}) {
+  const [hoveredMetric, setHoveredMetric] = useState<IndicatorKey | null>(null)
+  const scope = useRef<HTMLDivElement>(null)
+  const onEnter = useCallback((key: IndicatorKey) => setHoveredMetric(key), [])
+  const onSettle = useCallback((target: EventTarget | null) => setHoveredMetric(metricFrom(target)), [])
+  const metricLink = useMemo<MetricLink>(() => ({ onEnter, onSettle }), [onEnter, onSettle])
+  const products = useMemo(() => [product], [product])
+
+  useLayoutEffect(() => {
+    const root = scope.current
+    if (!root) return
+    for (const axis of root.querySelectorAll<SVGElement>(".radar-axis")) {
+      if (axis.dataset.metric === hoveredMetric) axis.setAttribute("data-highlighted", "true")
+      else axis.removeAttribute("data-highlighted")
+    }
+  }, [hoveredMetric])
+
+  return (
+    <div ref={scope} className="contents metric-link" data-hovered={hoveredMetric ?? undefined}>
+      <Card className="px-2 py-4">
+        <IndicatorRadar
+          products={products}
+          keys={RADAR_KEYS}
+          mode="profile"
+          catalogue={catalogue}
+          metricLink={metricLink}
+        />
+      </Card>
+      <table className="w-full border-separate border-spacing-0 text-left">
+        <caption className="sr-only">Absolute figures</caption>
+        <tbody className="[&>tr:last-child>th]:border-b-0">
+          {INDICATORS.map((indicator) => {
+            const highlighted = hoveredMetric === indicator.key
+            return (
+              <tr
+                key={indicator.key}
+                id={absoluteRowId(indicator.key)}
+                tabIndex={0}
+                data-metric={indicator.key}
+                data-highlighted={highlighted ? "true" : undefined}
+                aria-controls={radarAxisId(indicator.key)}
+                className="group outline-none"
+                onMouseEnter={() => setHoveredMetric(indicator.key)}
+                onMouseLeave={() => setHoveredMetric(metricFrom(document.activeElement))}
+                onFocus={() => setHoveredMetric(indicator.key)}
+                onBlur={(event) => setHoveredMetric(metricFrom(event.relatedTarget))}
+                onKeyDown={(event) => {
+                  if (event.key === " " || event.key === "Enter") event.preventDefault()
+                }}
+              >
+                <th
+                  scope="row"
+                  className={cn(
+                    "rounded-md border-b border-border px-2 py-2 text-left font-normal transition-colors duration-200 ease-out motion-reduce:transition-none",
+                    "group-data-[highlighted=true]:bg-[var(--hover)]",
+                    "group-focus-visible:ring-3 group-focus-visible:ring-ring/50",
+                  )}
+                >
+                  <span className="block text-xs text-muted-foreground transition-colors duration-200 ease-out motion-reduce:transition-none group-data-[highlighted=true]:text-foreground">
+                    {indicator.name}{" "}
+                    <span className="font-mono text-[10px] tracking-wide">{indicator.short}</span>
+                  </span>
+                  <span className="mt-0.5 block text-sm tabular-nums text-foreground">
+                    {formatQuantity(product.totals[indicator.key], unitFor(indicator.key, product.method))}
+                  </span>
+                </th>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
 
 export function ProductProfile({
   product,
@@ -86,24 +176,9 @@ export function ProductProfile({
           <p>
             The radar is scaled to other declarations with the same category, declared unit and method. It is not a score out of 100, and it is not a rating.
           </p>
-          <p>Lower impact sits toward the centre. The list on the right is the absolute figure.</p>
+          <p>Lower impact sits toward the centre. The table on the right is the absolute figure. A row and its axis light up together.</p>
         </div>
-        <Card className="px-2 py-4">
-          <IndicatorRadar products={[product]} keys={INDICATORS.map((item) => item.key)} mode="profile" catalogue={catalogue} />
-        </Card>
-        <dl className="flex flex-col">
-          {INDICATORS.map((indicator) => (
-            <div key={indicator.key} className="flex flex-col gap-0.5 border-b border-border py-2 last:border-b-0">
-              <dt className="text-xs text-muted-foreground">
-                {indicator.name}{" "}
-                <span className="font-mono text-[10px] tracking-wide">{indicator.short}</span>
-              </dt>
-              <dd className="text-sm tabular-nums">
-                {formatQuantity(product.totals[indicator.key], unitFor(indicator.key, product.method))}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <LinkedIndicators product={product} catalogue={catalogue} />
       </section>
 
       <section className="flex flex-col gap-4" aria-labelledby="stages-heading">
