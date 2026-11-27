@@ -30,6 +30,47 @@ test("the site link unfurls as a large card", async ({ page }) => {
   expect(body.byteLength).toBeGreaterThan(8_000)
 })
 
+test("radar axis and absolute figures highlight together", async ({ page }) => {
+  await page.goto("/products/hv-c30-089")
+
+  const water = page.locator("#absolute-wdp")
+  const waterAxis = page.locator("#radar-axis-wdp")
+  const warming = page.locator("#absolute-gwp")
+  const before = await warming.textContent()
+
+  await water.hover()
+  await expect(water).toHaveAttribute("data-highlighted", "true")
+  await expect(waterAxis).toHaveAttribute("data-highlighted", "true")
+  await expect(page.locator("#radar-axis-gwp")).not.toHaveAttribute("data-highlighted", "true")
+
+  await waterAxis.locator("text").hover()
+  await expect(water).toHaveAttribute("data-highlighted", "true")
+
+  await page.getByRole("heading", { level: 1, name: "Nordic C30/37" }).hover()
+  await expect(water).not.toHaveAttribute("data-highlighted", "true")
+  await expect(waterAxis).not.toHaveAttribute("data-highlighted", "true")
+
+  await warming.focus()
+  await expect(warming).toBeFocused()
+  await expect(page.locator("#radar-axis-gwp")).toHaveAttribute("data-highlighted", "true")
+
+  await waterAxis.focus()
+  await expect(waterAxis).toBeFocused()
+  await expect(water).toHaveAttribute("data-highlighted", "true")
+  await expect(warming).toHaveText(before ?? "")
+})
+
+test("metric highlight skips the fade when motion is reduced", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/products/hv-c30-089")
+  const duration = await page.locator("#absolute-gwp th").evaluate((el) => {
+    const raw = getComputedStyle(el).transitionDuration
+    const value = Number.parseFloat(raw)
+    return raw.endsWith("ms") ? value : value * 1000
+  })
+  expect(duration).toBeLessThan(1)
+})
+
 test("profile, compare, two products, shareable comparison", async ({ page }) => {
   await page.goto("/products/hv-c30-089")
 

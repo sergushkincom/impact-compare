@@ -52,7 +52,7 @@ Timber can show a negative global-warming total because of biogenic carbon. The 
 | `/products/[id]?with=id[,id]` | The comparison. The path product is the base. At most two other known ids. The base, unknowns, and duplicates are dropped. |
 | Unknown id | Not-found page. The catalogue is the twenty products shipped with the prototype. A link opens Nordic C30/37. |
 
-**Profile.** Identity card: material swatch, category, library (own or public), product id, summary, manufacturer, declared unit, method, and the line "modules A1–A3 · fictional figures". Three headlines: global warming, fossil energy, water deprivation. An eight-axis radar beside the absolute figures. A stage chart for one indicator at a time (toggle by short name: GWP, ODP, AP, EP, POCP, ADPe, ADPf, WDP), and a bar list of where that indicator comes from (cement, kiln fuel, and so on). A tooltip states that use and end of life are outside these figures.
+**Profile.** Identity card: material swatch, category, library (own or public), product id, summary, manufacturer, declared unit, method, and the line "modules A1–A3 · fictional figures". Three headlines: global warming, fossil energy, water deprivation. An eight-axis radar beside a table of the absolute figures. Hovering or focusing an axis, its label, or the matching row highlights both. A stage chart for one indicator at a time (toggle by short name: GWP, ODP, AP, EP, POCP, ADPe, ADPf, WDP), and a bar list of where that indicator comes from (cement, kiln fuel, and so on). A tooltip states that use and end of life are outside these figures.
 
 **Compare.** The header button opens "Select products to compare". The opened product stays the base and is pinned at the top of the list. Search, then three tabs — Own library, Public database, All — each with a count for the current query. Rows are checkboxes. The preview card follows hover and keyboard focus and shows the three headlines. The dialog allows one or two others. If the draft set differs in category, unit, or method, the same warning appears before you confirm. Confirm writes the URL and closes the dialog. Enter in the search field moves focus to the first row.
 
@@ -163,6 +163,7 @@ Shipped and live at [https://impact-compare.vercel.app](https://impact-compare.v
 - Fair-ranking check on category, declared unit, and method, with the chart left visible.
 - Shareable comparison URL, CSV export, copy link, dark/light theme.
 - Eight indicators, peer-scaled radar, A1–A3 stage charts, source breakdown on the profile.
+- Radar axes and the absolute-figure rows highlight together on hover and keyboard focus. The fade is skipped when motion is reduced.
 - Vitest suite and a Playwright spec, gated in CI together with typecheck, lint, and a production build.
 - README essay, screenshots, and this passport.
 - A share card for the site link. `app/opengraph-image.tsx` draws it: the Relative mark, Nordic C30/37 against Meridian C30/37, and the line that every figure is fictional. The root metadata sets the title, the description, the Open Graph fields, and a Twitter large-image card. `metadataBase` is `https://impact-compare.vercel.app`, so the image URL is absolute.
